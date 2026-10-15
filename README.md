@@ -75,6 +75,33 @@ dsh plugin --profile web add github:anye-99/dsh-next-step-suggest
 3. 在 profile 目录执行 `pnpm install`
 4. 重启 DSH
 
+### 开发时避免手动同步（推荐）
+
+上面的第 1 步是**复制**，因此改了工作目录的代码后，profile 侧不会自动更新。
+用 `scripts/sync-to-profile.ps1` 把 `lib/` 和 `scripts/` 换成指向工作目录的
+**junction**（目录联接），之后改动即时生效：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\sync-to-profile.ps1
+# 换 profile：-Profile web ；只看不改：-DryRun
+```
+
+脚本是幂等的，重复运行只会报告状态。它做三件事：
+
+1. 校验 `lib/`、`scripts/` 是否为指向本仓库的 junction，断了或指错就重建
+   （重建前把实体目录备份到 `~/.dsh/_plugin-backups/`）；
+2. 对齐 `package.json` / `README.md` / `LICENSE` / `cordis.patch.yml`
+   —— 文件级符号链接在 Windows 需要管理员或开发者模式，硬链接又不能跨卷，
+   所以这四个文件只能复制；
+3. 打印后续注意事项。
+
+为什么不是整个插件目录做 junction：`local-plugins/<name>` 自身被 DSH 的
+HMR watcher 持有句柄，改不动；但**目录内部**可以自由增删改，所以链接放在
+`lib/`、`scripts/` 这一层。
+
+`lib/` 与 `scripts/` 的改动由 HMR 自动生效（改完约 1 秒浏览器即重载，无需重启
+DSH）；`package.json` 这类静态文件的改动可能仍需重启 DSH 才会重新读取。
+
 ## 卸载
 
 从 `package.json` 移除上述两处条目，`pnpm install` 后重启即可；
