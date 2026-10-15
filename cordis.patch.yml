@@ -1,0 +1,7 @@
+# dsh-next-step-suggest bundle patch.
+#
+# 一行 insert 挂载插件。宿主端注册 /api/dsh-next-step-suggest 路由（辅助 LLM 调用），
+# 浏览器端在 conversation.composer.dock 挂载「下一步建议」面板。
+- insert:
+    - id: next-step-suggest
+      name: 'dsh-next-step-suggest'
