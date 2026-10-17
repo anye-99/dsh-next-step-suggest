@@ -1,6 +1,6 @@
 {
   "name": "dsh-next-step-suggest",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "根据当前回答生成下一步建议：每轮回答结束后，用会话当前模型提炼 3 条可点击的后续提问建议，点击即填入输入框。",
   "type": "module",
   "main": "./lib/index.js",
@@ -21,7 +21,9 @@
     "web",
     "ui",
     "suggestions",
-    "next-step"
+    "next-step",
+    "下一步建议",
+    "后续建议"
   ],
   "engines": {
     "node": "^22.19.0 || >=24.0.0"
