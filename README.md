@@ -55,7 +55,13 @@ promptAttempted / awaitingFirstTurn`。对话内容由 `ui-chat` 通过独立的
 
 ## 安装
 
-从 GitHub 安装：
+从 GitHub Release 安装预构建 tarball（推荐，免去 `allowBuilds` 构建授权）：
+
+```sh
+dsh plugin --profile web add "https://github.com/anye-99/dsh-next-step-suggest/releases/latest/download/dsh-next-step-suggest.tgz"
+```
+
+从源码安装：
 
 ```sh
 dsh plugin --profile web add github:anye-99/dsh-next-step-suggest
