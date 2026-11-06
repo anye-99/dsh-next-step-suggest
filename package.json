@@ -28,6 +28,18 @@
   "engines": {
     "node": "^22.19.0 || >=24.0.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anye-99/dsh-next-step-suggest.git"
+  },
+  "homepage": "https://github.com/anye-99/dsh-next-step-suggest#readme",
+  "bugs": {
+    "url": "https://github.com/anye-99/dsh-next-step-suggest/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
