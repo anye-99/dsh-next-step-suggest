@@ -43,11 +43,14 @@ jobs:
             fi
           fi
 
-      - name: 语法与单测
+      - name: 语法与清单自检
+        # 只用 Node 内建模块：宿主端冒烟测试需要 @deepseek-ai/dsh-llm 及其整条
+        # peer 链（cordis / dsh-attachment / dsh-brand / ...），干净机器装不齐，
+        # 不该让发布因为「装不到宿主」而变红。宿主行为在本地跑 test-host.mjs。
         run: |
           node --check lib/index.js
           node --check lib/client.js
-          node scripts/test-host.mjs
+          node scripts/test-manifest.mjs
           node scripts/test-client.mjs
 
       - name: 打包
