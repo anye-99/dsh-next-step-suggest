@@ -1,0 +1,87 @@
+name: release
+
+# 打 tag 即发布到 npm，并在 Release 上挂预构建 tarball。
+#
+# 需要仓库 secret：NPM_TOKEN（Granular Access Token，勾选 publish，作用域含本包）。
+# 未配置该 secret 时工作流会跳过发布步骤，只做打包与校验，不会失败。
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '只打包不发布'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: 版本与 tag 对齐校验
+        run: |
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          echo "package.json version: $PKG_VERSION"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG="${GITHUB_REF_NAME#v}"
+            if [ "$TAG" != "$PKG_VERSION" ]; then
+              echo "::error::tag $GITHUB_REF_NAME 与 package.json 版本 $PKG_VERSION 不一致"
+              exit 1
+            fi
+          fi
+
+      - name: 语法与单测
+        run: |
+          node --check lib/index.js
+          node --check lib/client.js
+          node scripts/test-host.mjs
+          node scripts/test-client.mjs
+
+      - name: 打包
+        run: |
+          npm pack
+          ls -l ./*.tgz
+
+      - name: 发布到 npm
+        if: github.event_name == 'push' || inputs.dry_run == false
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "::warning::未配置 NPM_TOKEN，跳过 npm 发布"
+            exit 0
+          fi
+          VERSION="$(node -p "require('./package.json').version")"
+          if npm view "dsh-next-step-suggest@$VERSION" version >/dev/null 2>&1; then
+            echo "::notice::$VERSION 已存在于 npm，跳过"
+            exit 0
+          fi
+          npm publish --access=public --provenance
+
+      - name: 上传 tarball 到 Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          ASSET="dsh-next-step-suggest-$VERSION.tgz"
+          cp "$ASSET" dsh-next-step-suggest.tgz
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$ASSET" dsh-next-step-suggest.tgz --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$ASSET" dsh-next-step-suggest.tgz \
+              --title "dsh-next-step-suggest $VERSION" \
+              --notes "版本 $VERSION，产物与 npm 包同源。"
+          fi
